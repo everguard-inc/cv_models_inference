@@ -1,0 +1,11 @@
+[submodule "src/eg_utils"]
+	path = src/eg_utils
+	url = https://github.com/everguard-inc/eg_utils.git
+	branch = dev
+[submodule "src/deep_models"]
+	path = src/deep_models
+	url = https://github.com/everguard-inc/deep_models.git
+[submodule "src/yolov5"]
+	path = src/yolov5
+	url = https://github.com/everguard-inc/yolov_5_multilabel
+	branch = yolov5_initial
