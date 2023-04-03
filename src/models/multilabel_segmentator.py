@@ -13,6 +13,7 @@ class MultilabelSegmentator(DeepSegmentor):
         self._threshold = local_config.threshold
         self._output_size = local_config.get("output_size", self._input_size)
         self._class_names = local_config.get("class_names")
+        self._num_classes = len(self._class_names)
         self._class_colors = local_config.get("class_colors")
         self._device = local_config.get("device", "cuda:0")
         self._gpu_preprocess = local_config.get("preprocess_with_gpu", True)
