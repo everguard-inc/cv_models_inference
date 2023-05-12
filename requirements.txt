@@ -1,6 +1,6 @@
 numpy
-opencv-python==4.5.4.60
-scipy==1.7.3
+opencv-python
+scipy
 filterpy
 more_itertools
 torch
