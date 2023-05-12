@@ -9,3 +9,6 @@
 	path = src/yolov5
 	url = https://github.com/everguard-inc/yolov_5_multilabel
 	branch = yolov5_initial
+[submodule "src/deepsort"]
+	path = src/deepsort
+	url = https://github.com/everguard-inc/deepsort.git
