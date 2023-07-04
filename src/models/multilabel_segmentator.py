@@ -23,9 +23,15 @@ class MultilabelSegmentator(DeepSegmentor):
         )
         self._channel_std = 255 * torch.tensor(local_config.channel_std, dtype=self._torch_precision).view(1, 3, 1, 1)
         self._cpu_additional = False
+        self._batch_size = local_config["batch_size"]
+        self._tensor_buffer = torch.empty(
+            size = (self._batch_size, 3, self._input_size[0], self._input_size[1]), 
+            dtype = self._torch_precision, device = self._device
+        )
 
     def load_cfg(self, config: EasyDict) -> EasyDict:
         cfg = super().load_cfg(config)
+        self._batch_size = cfg['batch_size']
         self.set_preprocess_key(resize_mode="cv", output_dtype=None)
         return cfg
 
@@ -46,7 +52,7 @@ class MultilabelSegmentator(DeepSegmentor):
             self._model = torch.jit.load(self._pb_file).to(self._device).to(self._torch_precision).eval()  # type: ignore
             self._model.eval()
         else:
-            from eg_utils.convertation.trt_model import TRTModel  # type: ignore
+            from cv_models_inference.src.eg_utils.eg_utils.convertation.trt_model import TRTModel  # type: ignore
 
             self._model = TRTModel(model_path=self._pb_file, device=str(self._device))
 
@@ -58,33 +64,35 @@ class MultilabelSegmentator(DeepSegmentor):
 
     def _warmup(self) -> NoReturn:
         print("Warm up...")
-        check_array = torch.rand(size=(1,3,*self._input_size[:2]))
-        check_array = check_array.type(dtype=self._torch_precision)
-        self.predict_on_batch(check_array)
+        check_array = np.random.random((1,3,*self._input_size[:2]))
+        self._tensor_buffer = torch.from_numpy(check_array).to(self._device).to(self._torch_precision)
+        self.predict_on_batch()
         print("Done")
 
-    def gpu_batch_preprocess(self, batch: Sequence[np.ndarray], **kwargs: Any) -> torch.Tensor:
-        if kwargs['to_device']:
-            batch = batch.to(self._device)
-        batch = batch.type(dtype=self._torch_precision)
-        batch = torch.nn.functional.interpolate(batch, size=(self._input_size[:2]), mode="bilinear")
-        batch = (batch - self._channel_mean) / self._channel_std
-        return batch
+    def gpu_batch_preprocess(self) -> torch.Tensor:
+        self._tensor_buffer = torch.nn.functional.interpolate(
+            self._tensor_buffer, size=(self._input_size[:2]), mode="bilinear", align_corners = True
+        )
+        self._tensor_buffer = (self._tensor_buffer - self._channel_mean) / self._channel_std
 
-    def predict_on_batch(self, image: torch.Tensor) -> np.ndarray:
-        output = self._model(image)
+    def predict_on_batch(self) -> np.ndarray:
+        output = self._model(self._tensor_buffer)
         masks = (output.sigmoid() > self._threshold).to(torch.uint8).cpu().numpy()
         return masks
 
     def _postprocess_image_masks(self, image_masks: np.ndarray) -> np.ndarray:
         if self._output_size[:2] != self._input_size[:2]:
-            image_masks = torch.nn.functional.interpolate(image_masks, size=(self._output_size[:2]), mode="bilinear")
+            image_masks = torch.nn.functional.interpolate(
+                image_masks, size=(self._output_size[:2]), mode="bilinear", align_corners=True
+            )
         return image_masks
 
     # methods for testing
-    def forward_batch(self, batch: Sequence[np.ndarray]) -> List[np.ndarray]:
-        batch = self.gpu_batch_preprocess(batch)
-        masks = self.predict_on_batch(batch)
+    def forward_batch(self, batch: np.ndarray) -> List[np.ndarray]:
+        batch = batch.transpose((0, 3, 1, 2))
+        self._tensor_buffer = torch.from_numpy(batch).to(self._device).to(self._torch_precision)
+        self.gpu_batch_preprocess()
+        masks = self.predict_on_batch()
         output = self._postprocess_image_masks(image_masks=masks)
         return output
 
