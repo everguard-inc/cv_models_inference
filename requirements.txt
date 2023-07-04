@@ -1,5 +1,4 @@
 numpy
-opencv-python
 scipy
 filterpy
 more_itertools
