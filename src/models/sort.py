@@ -22,7 +22,7 @@ import numpy as np
 from filterpy.kalman import KalmanFilter
 from scipy.optimize import linear_sum_assignment
 
-from eg_utils.helpers.buffers import Buffer, TimeBuffer
+from cv_models_inference.src.eg_utils.eg_utils.helpers.buffers import Buffer, TimeBuffer
 
 
 np.random.seed(0)
