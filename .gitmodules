@@ -12,3 +12,6 @@
 [submodule "src/deepsort"]
 	path = src/deepsort
 	url = https://github.com/everguard-inc/deepsort.git
+[submodule "src/eg_basic"]
+	path = src/eg_basic
+	url = https://github.com/everguard-inc/eg_basic.git
