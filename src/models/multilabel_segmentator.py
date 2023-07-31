@@ -23,15 +23,13 @@ class MultilabelSegmentator(DeepSegmentor):
         )
         self._channel_std = 255 * torch.tensor(local_config.channel_std, dtype=self._torch_precision).view(1, 3, 1, 1)
         self._cpu_additional = False
-        self._batch_size = local_config["batch_size"]
         self._tensor_buffer = torch.empty(
-            size = (self._batch_size, 3, self._input_size[0], self._input_size[1]), 
+            size = (2, 3, self._input_size[0], self._input_size[1]), 
             dtype = self._torch_precision, device = self._device
         )
 
     def load_cfg(self, config: EasyDict) -> EasyDict:
         cfg = super().load_cfg(config)
-        self._batch_size = cfg['batch_size']
         self.set_preprocess_key(resize_mode="cv", output_dtype=None)
         return cfg
 

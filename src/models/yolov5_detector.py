@@ -37,7 +37,7 @@ class YoloV5Detector:
         self._timers: Dict[str, List[float]] = defaultdict(list)
         self._batch_size = config["batch_size"]
         self._tensor_buffer = torch.empty(
-            size = (self._batch_size, 3, self._imgsz[0], self._imgsz[1]), 
+            size = (2, 3, self._imgsz[0], self._imgsz[1]), 
             dtype = self._torch_precision, device = self._device
         )
 
